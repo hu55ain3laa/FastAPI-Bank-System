@@ -12,6 +12,9 @@
 
 _Because banking should be secure AND beautiful._
 
+<h3>⚠️ FOR LEARNING PURPOSES ONLY ⚠️</h3>
+<p>This project was created for educational purposes to demonstrate secure coding practices and modern web development techniques.</p>
+
 </div>
 
 ## 📸 Project Showcase
@@ -22,7 +25,7 @@ _Because banking should be secure AND beautiful._
 
 ## 🌟 What Makes This Special?
 
-This isn't just another banking app – it's a showcase of modern web development and security practices. 
+This isn't just another banking app – it's a showcase of modern web development and security practices built entirely for learning and demonstration purposes.
 
 With **Secure Bank App**, you'll find:
 
@@ -115,21 +118,25 @@ Security isn't an afterthought in this app - it's woven into every line of code:
    pip install -r requirements.txt
    ```
 
-4. **Launch the application:**
+4. **Launch the application using uvicorn:**
    ```bash
-   python -m app.main
+   uvicorn app.main:app --reload
    ```
 
 5. **Visit `http://localhost:8000` and be amazed!** ✨
 
 ## 🎓 Learning Experience
 
-This project was created to demonstrate secure coding practices and modern web development techniques. It's perfect for:
+This project was created purely for learning and demonstration purposes. It's perfect for:
 
 - 🧑‍💻 Developers looking to learn FastAPI
 - 🔒 Security enthusiasts interested in financial application security
 - 🎨 Frontend developers exploring Tailwind CSS and HTMX
 - 🧪 Anyone wanting to see a full-stack application in action
+
+## ⚠️ Important Note
+
+This application is not intended for production use or to handle real financial data. It is a teaching tool designed to demonstrate web development concepts, security practices, and modern UI design.
 
 ## 🧙‍♂️ Author
 
