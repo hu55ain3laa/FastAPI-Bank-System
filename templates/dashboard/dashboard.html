@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Secure Bank App{% endblock %}
+
+{% block content %}
+<div class="welcome-section mb-6">
+    <h1>Welcome back, {{ user.first_name }}</h1>
+    <p>Here's an overview of your financial accounts and recent activity.</p>
+</div>
+
+<div class="grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+    <!-- Account Balance Card -->
+    <div class="card account-balance">
+        <h2>Account Balance</h2>
+        <div class="balance-amount">
+            <span class="currency">$</span>
+            <span class="amount">{{ account.balance|round(2) }}</span>
+        </div>
+        <div class="account-details">
+            <p>Account Number: <span class="masked-account">•••• {{ account.number[-4:] }}</span></p>
+            <p>Account Type: {{ account.type|capitalize }}</p>
+        </div>
+        <div class="action-buttons">
+            <a href="{{ url_for('dashboard.transfer') }}" class="btn btn-primary">Transfer Money</a>
+            <a href="{{ url_for('dashboard.deposit') }}" class="btn btn-secondary">Deposit</a>
+        </div>
+    </div>
+
+    <!-- Quick Actions Card -->
+    <div class="card quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-grid">
+            <a href="{{ url_for('dashboard.transfer') }}" class="action-item">
+                <i class="icon-transfer"></i>
+                <span>Transfer</span>
+            </a>
+            <a href="{{ url_for('dashboard.transactions') }}" class="action-item">
+                <i class="icon-history"></i>
+                <span>History</span>
+            </a>
+            <a href="{{ url_for('dashboard.pay_bills') }}" class="action-item">
+                <i class="icon-bill"></i>
+                <span>Pay Bills</span>
+            </a>
+            <a href="{{ url_for('dashboard.account') }}" class="action-item">
+                <i class="icon-settings"></i>
+                <span>Settings</span>
+            </a>
+            <a href="{{ url_for('dashboard.support') }}" class="action-item">
+                <i class="icon-support"></i>
+                <span>Support</span>
+            </a>
+            <a href="{{ url_for('dashboard.statements') }}" class="action-item">
+                <i class="icon-document"></i>
+                <span>Statements</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="grid mt-6" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <!-- Recent Transactions -->
+    <div class="card recent-transactions">
+        <div class="card-header">
+            <h2>Recent Transactions</h2>
+            <a href="{{ url_for('dashboard.transactions') }}" class="view-all">View All</a>
+        </div>
+        <div class="transactions-list">
+            {% if recent_transactions %}
+                {% for transaction in recent_transactions %}
+                    <div class="transaction-item">
+                        <div class="transaction-icon {{ transaction.type }}">
+                            <i class="icon-{{ transaction.type }}"></i>
+                        </div>
+                        <div class="transaction-details">
+                            <h3>{{ transaction.description }}</h3>
+                            <span class="transaction-time">{{ transaction.timestamp.strftime('%b %d, %Y - %H:%M') }}</span>
+                        </div>
+                        <div class="transaction-amount {% if transaction.amount > 0 %}positive{% else %}negative{% endif %}">
+                            {% if transaction.amount > 0 %}+{% endif %}${{ transaction.amount|abs|round(2) }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-transactions">
+                    <p>No recent transactions to display.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Upcoming Bills -->
+    <div class="card upcoming-bills">
+        <h2>Upcoming Bills</h2>
+        <div class="bills-list">
+            {% if upcoming_bills %}
+                {% for bill in upcoming_bills %}
+                    <div class="bill-item">
+                        <div class="bill-details">
+                            <h3>{{ bill.name }}</h3>
+                            <span class="due-date">Due {{ bill.due_date.strftime('%b %d, %Y') }}</span>
+                        </div>
+                        <div class="bill-amount">${{ bill.amount|round(2) }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-bills">
+                    <p>No upcoming bills.</p>
+                </div>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('dashboard.pay_bills') }}" class="btn btn-secondary pay-bills-btn">Manage Bills</a>
+    </div>
+</div>
+
+<div class="card mt-6 spending-insights">
+    <h2>Spending Insights</h2>
+    <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="chart-container">
+            <h3>Monthly Spending by Category</h3>
+            <div class="chart-placeholder">
+                <!-- Canvas for chart -->
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-container">
+            <h3>Income vs. Expenses</h3>
+            <div class="chart-placeholder">
+                <!-- Canvas for chart -->
+                <canvas id="incomeExpenseChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-6 security-alerts">
+    <h2>Security Center</h2>
+    <div class="alerts-list">
+        {% if security_alerts %}
+            {% for alert in security_alerts %}
+                <div class="alert-item {{ alert.severity }}">
+                    <div class="alert-icon">
+                        <i class="icon-alert"></i>
+                    </div>
+                    <div class="alert-details">
+                        <h3>{{ alert.title }}</h3>
+                        <p>{{ alert.description }}</p>
+                        <span class="alert-time">{{ alert.timestamp.strftime('%b %d, %Y - %H:%M') }}</span>
+                    </div>
+                    <div class="alert-actions">
+                        <button class="btn btn-small btn-secondary">Dismiss</button>
+                        <button class="btn btn-small btn-primary">Resolve</button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-alerts">
+                <div class="secure-icon">
+                    <i class="icon-shield"></i>
+                </div>
+                <p>Your account is secure. No security alerts at this time.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Chart.js scripts for spending insights
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('categoryChart')) {
+            var ctxCategory = document.getElementById('categoryChart').getContext('2d');
+            var categoryChart = new Chart(ctxCategory, {
+                type: 'pie',
+                data: {
+                    labels: ['Housing', 'Food', 'Transportation', 'Entertainment', 'Utilities', 'Other'],
+                    datasets: [{
+                        data: [{{ spending_data.housing }}, {{ spending_data.food }}, 
+                               {{ spending_data.transportation }}, {{ spending_data.entertainment }}, 
+                               {{ spending_data.utilities }}, {{ spending_data.other }}],
+                        backgroundColor: [
+                            '#4A6FFF', '#45C4B0', '#9370DB', '#FF6B6B', '#FFD166', '#2A324B'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        if (document.getElementById('incomeExpenseChart')) {
+            var ctxIncome = document.getElementById('incomeExpenseChart').getContext('2d');
+            var incomeChart = new Chart(ctxIncome, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [
+                        {
+                            label: 'Income',
+                            data: [{{ monthly_data.income }}],
+                            backgroundColor: '#4A6FFF'
+                        },
+                        {
+                            label: 'Expenses',
+                            data: [{{ monthly_data.expenses }}],
+                            backgroundColor: '#FF6B6B'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

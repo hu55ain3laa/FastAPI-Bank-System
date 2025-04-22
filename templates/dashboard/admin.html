@@ -1,0 +1,646 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Secure Bank App{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 font-heading mb-2">Admin Dashboard</h1>
+    <p class="text-lg text-gray-600">Manage deposit and withdrawal approvals and banner ads</p>
+</div>
+
+<!-- Banner Management -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-bank-primary font-heading">Banner Management</h2>
+        <button id="new-banner-btn" class="px-4 py-2 bg-bank-primary hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+            Add New Banner
+        </button>
+    </div>
+    
+    <div id="banner-form" class="hidden mb-6 p-4 bg-gray-50 rounded-lg">
+        <h3 class="text-lg font-medium text-gray-800 mb-3">Add/Edit Banner</h3>
+        <form id="banner-form-element" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="hidden" id="banner-id" name="id" value="">
+            
+            <div class="md:col-span-2">
+                <label for="banner-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input type="text" id="banner-title" name="title" required 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-primary focus:border-bank-primary">
+            </div>
+            
+            <div class="md:col-span-2">
+                <label for="banner-subtitle" class="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                <input type="text" id="banner-subtitle" name="subtitle" required 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-primary focus:border-bank-primary">
+            </div>
+            
+            <div>
+                <label for="banner-bg-color" class="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+                <select id="banner-bg-color" name="background_color" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-primary focus:border-bank-primary">
+                    <option value="bg-gradient-to-r from-bank-primary to-blue-400">Primary Blue</option>
+                    <option value="bg-gradient-to-r from-bank-success to-green-400">Success Green</option>
+                    <option value="bg-gradient-to-r from-bank-warning to-yellow-400">Warning Yellow</option>
+                    <option value="bg-gradient-to-r from-bank-danger to-red-400">Danger Red</option>
+                    <option value="bg-gradient-to-r from-purple-500 to-purple-300">Purple</option>
+                    <option value="bg-gradient-to-r from-gray-700 to-gray-500">Dark Gray</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="banner-text-color" class="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
+                <select id="banner-text-color" name="text_color" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-primary focus:border-bank-primary">
+                    <option value="text-white">White</option>
+                    <option value="text-black">Black</option>
+                    <option value="text-gray-800">Dark Gray</option>
+                    <option value="text-yellow-200">Light Yellow</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="banner-order" class="block text-sm font-medium text-gray-700 mb-1">Display Order</label>
+                <input type="number" id="banner-order" name="order" min="0" value="0" required 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-primary focus:border-bank-primary">
+                <p class="text-xs text-gray-500 mt-1">Leave as 0 to auto-assign the next available order number</p>
+            </div>
+            
+            <div>
+                <label for="banner-active" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select id="banner-active" name="is_active" required
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-primary focus:border-bank-primary">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+            
+            <div class="md:col-span-2 pt-2 flex justify-end space-x-2">
+                <button type="button" id="cancel-banner-btn" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-bank-primary hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                    Save Banner
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtitle</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="banners-list" class="bg-white divide-y divide-gray-200">
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                        Loading banners...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <h2 class="text-xl font-bold text-bank-primary font-heading mb-4">Pending Deposits</h2>
+    
+    {% if deposits %}
+        <div class="mb-4">
+            <p class="text-gray-600">You have {{ deposits|length }} pending deposit cheques to review.</p>
+        </div>
+        
+        {% for deposit in deposits %}
+            <div class="mb-4 p-4 border border-gray-200 rounded-lg">
+                <div class="flex justify-between mb-2">
+                    <h3 class="font-medium">Cheque #{{ deposit.cheque_number }}</h3>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                </div>
+                
+                <p><strong>User:</strong> {{ deposit.username }}</p>
+                <p><strong>Amount:</strong> ${{ deposit.amount|default(0)|round(2) }}</p>
+                <p><strong>Created:</strong> {{ deposit.created_at }}</p>
+                
+                <div class="flex gap-2 mt-4">
+                    <button class="px-3 py-1.5 bg-bank-success text-white text-sm font-medium rounded hover:bg-green-600 transition-colors" 
+                            data-deposit-id="{{ deposit.id }}" 
+                            data-deposit-action="approved">
+                        Approve
+                    </button>
+                    <button class="px-3 py-1.5 bg-bank-danger text-white text-sm font-medium rounded hover:bg-red-600 transition-colors" 
+                            data-deposit-id="{{ deposit.id }}" 
+                            data-deposit-action="rejected">
+                        Reject
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-gray-500">No pending deposit cheques to review.</p>
+    {% endif %}
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <h2 class="text-xl font-bold text-bank-primary font-heading mb-4">Pending Withdrawals</h2>
+    
+    {% if withdrawals %}
+        <div class="mb-4">
+            <p class="text-gray-600">You have {{ withdrawals|length }} pending withdrawal cheques to review.</p>
+        </div>
+        
+        {% for withdrawal in withdrawals %}
+            <div class="mb-4 p-4 border {% if not withdrawal.has_sufficient_funds %}border-red-300{% else %}border-gray-200{% endif %} rounded-lg">
+                <div class="flex justify-between mb-2">
+                    <h3 class="font-medium">Withdrawal #{{ withdrawal.cheque_number }}</h3>
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                </div>
+                
+                <p><strong>User:</strong> {{ withdrawal.username }}</p>
+                <p><strong>Amount:</strong> ${{ withdrawal.amount|default(0)|round(2) }}</p>
+                <p><strong>Current Balance:</strong> ${{ withdrawal.user_balance|default(0)|round(2) }}</p>
+                <p><strong>Created:</strong> {{ withdrawal.created_at }}</p>
+                
+                {% if not withdrawal.has_sufficient_funds %}
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-lg mt-2 mb-2 text-red-700">
+                        <p><strong>Warning:</strong> User has insufficient funds for this withdrawal!</p>
+                    </div>
+                {% endif %}
+                
+                <div class="flex gap-2 mt-4">
+                    <button class="px-3 py-1.5 bg-bank-success text-white text-sm font-medium rounded hover:bg-green-600 transition-colors {% if not withdrawal.has_sufficient_funds %}opacity-50 cursor-not-allowed{% endif %}" 
+                            data-withdrawal-id="{{ withdrawal.id }}" 
+                            data-withdrawal-action="approved" 
+                            {% if not withdrawal.has_sufficient_funds %}disabled{% endif %}>
+                        Approve
+                    </button>
+                    <button class="px-3 py-1.5 bg-bank-danger text-white text-sm font-medium rounded hover:bg-red-600 transition-colors" 
+                            data-withdrawal-id="{{ withdrawal.id }}" 
+                            data-withdrawal-action="rejected">
+                        Reject
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-gray-500">No pending withdrawal cheques to review.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Banner Management
+        const newBannerBtn = document.getElementById('new-banner-btn');
+        const bannerForm = document.getElementById('banner-form');
+        const bannerFormElement = document.getElementById('banner-form-element');
+        const cancelBannerBtn = document.getElementById('cancel-banner-btn');
+        const bannersList = document.getElementById('banners-list');
+        
+        // Show form when Add New Banner button is clicked
+        if (newBannerBtn) {
+            newBannerBtn.addEventListener('click', function() {
+                // Clear form for new banner
+                bannerFormElement.reset();
+                document.getElementById('banner-id').value = '';
+                document.getElementById('banner-order').value = '0'; // Reset to 0 for auto-increment
+                // Show a message about auto-numbering
+                const orderHelpText = document.querySelector('#banner-order + p.text-xs');
+                if (orderHelpText) {
+                    orderHelpText.classList.add('font-medium', 'text-bank-primary');
+                    setTimeout(() => {
+                        orderHelpText.classList.remove('font-medium', 'text-bank-primary');
+                    }, 3000);
+                }
+                bannerForm.classList.remove('hidden');
+            });
+        }
+        
+        // Hide form when Cancel button is clicked
+        if (cancelBannerBtn) {
+            cancelBannerBtn.addEventListener('click', function() {
+                bannerForm.classList.add('hidden');
+            });
+        }
+        
+        // Handle banner form submission
+        if (bannerFormElement) {
+            bannerFormElement.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(bannerFormElement);
+                const bannerId = document.getElementById('banner-id').value;
+                
+                // Convert form data to JSON
+                const payload = {
+                    title: formData.get('title'),
+                    subtitle: formData.get('subtitle'),
+                    background_color: formData.get('background_color'),
+                    text_color: formData.get('text_color'),
+                    is_active: formData.get('is_active') === 'true',
+                    order: parseInt(formData.get('order'))
+                };
+                
+                try {
+                    // Get auth token
+                    const token = localStorage.getItem('access_token');
+                    const tokenType = localStorage.getItem('token_type');
+                    
+                    if (!token || !tokenType) {
+                        throw new Error('You are not authenticated. Please log in again.');
+                    }
+                    
+                    // Determine if this is a create or update operation
+                    const method = bannerId ? 'PUT' : 'POST';
+                    const url = bannerId ? `/api/admin/banners/${bannerId}` : '/api/admin/banners';
+                    
+                    // Submit request
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `${tokenType} ${token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (response.ok) {
+                        // Show success message
+                        if (window.showNotification) {
+                            window.showNotification(`Banner ${bannerId ? 'updated' : 'created'} successfully!`, 'success');
+                        }
+                        
+                        // Hide form and refresh banner list
+                        bannerForm.classList.add('hidden');
+                        loadBanners();
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || `Failed to ${bannerId ? 'update' : 'create'} banner`);
+                    }
+                } catch (error) {
+                    console.error('Banner form error:', error);
+                    
+                    // Show error notification
+                    if (window.showNotification) {
+                        window.showNotification(error.message, 'error');
+                    }
+                }
+            });
+        }
+        
+        // Load banners
+        async function loadBanners() {
+            try {
+                // Get auth token
+                const token = localStorage.getItem('access_token');
+                const tokenType = localStorage.getItem('token_type');
+                
+                if (!token || !tokenType) {
+                    throw new Error('You are not authenticated. Please log in again.');
+                }
+                
+                // Fetch banners
+                const response = await fetch('/api/admin/banners', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `${tokenType} ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const banners = await response.json();
+                    
+                    if (banners.length === 0) {
+                        bannersList.innerHTML = `
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
+                                    No banners found. Create your first banner!
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+                    
+                    // Render banners
+                    let html = '';
+                    banners.forEach(banner => {
+                        html += `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    ${banner.title}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${banner.subtitle}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${banner.order}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${banner.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                        ${banner.is_active ? 'Active' : 'Inactive'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-bank-primary hover:text-blue-700 mr-2 edit-banner-btn" data-id="${banner.id}">
+                                        Edit
+                                    </button>
+                                    <button class="text-bank-primary hover:text-blue-700 mr-2 toggle-banner-btn" data-id="${banner.id}">
+                                        ${banner.is_active ? 'Disable' : 'Enable'}
+                                    </button>
+                                    <button class="text-bank-danger hover:text-red-700 delete-banner-btn" data-id="${banner.id}">
+                                        Delete
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    bannersList.innerHTML = html;
+                    
+                    // Add click handlers for edit, toggle, and delete buttons
+                    document.querySelectorAll('.edit-banner-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            editBanner(this.dataset.id);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.toggle-banner-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            toggleBanner(this.dataset.id);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.delete-banner-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            deleteBanner(this.dataset.id);
+                        });
+                    });
+                    
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to load banners');
+                }
+            } catch (error) {
+                console.error('Load banners error:', error);
+                
+                bannersList.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-sm text-red-500">
+                            Error loading banners: ${error.message}
+                        </td>
+                    </tr>
+                `;
+                
+                // Show error notification
+                if (window.showNotification) {
+                    window.showNotification(error.message, 'error');
+                }
+            }
+        }
+        
+        // Edit banner
+        async function editBanner(id) {
+            try {
+                // Get auth token
+                const token = localStorage.getItem('access_token');
+                const tokenType = localStorage.getItem('token_type');
+                
+                if (!token || !tokenType) {
+                    throw new Error('You are not authenticated. Please log in again.');
+                }
+                
+                // Fetch banner details
+                const response = await fetch(`/api/admin/banners/${id}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `${tokenType} ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const banner = await response.json();
+                    
+                    // Populate form
+                    document.getElementById('banner-id').value = banner.id;
+                    document.getElementById('banner-title').value = banner.title;
+                    document.getElementById('banner-subtitle').value = banner.subtitle;
+                    document.getElementById('banner-bg-color').value = banner.background_color;
+                    document.getElementById('banner-text-color').value = banner.text_color;
+                    document.getElementById('banner-order').value = banner.order;
+                    document.getElementById('banner-active').value = banner.is_active.toString();
+                    
+                    // Show form
+                    bannerForm.classList.remove('hidden');
+                    
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to load banner details');
+                }
+            } catch (error) {
+                console.error('Edit banner error:', error);
+                
+                // Show error notification
+                if (window.showNotification) {
+                    window.showNotification(error.message, 'error');
+                }
+            }
+        }
+        
+        // Toggle banner status
+        async function toggleBanner(id) {
+            try {
+                // Get auth token
+                const token = localStorage.getItem('access_token');
+                const tokenType = localStorage.getItem('token_type');
+                
+                if (!token || !tokenType) {
+                    throw new Error('You are not authenticated. Please log in again.');
+                }
+                
+                // Send toggle request
+                const response = await fetch(`/api/admin/banners/${id}/toggle`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `${tokenType} ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    // Show success message
+                    if (window.showNotification) {
+                        window.showNotification('Banner status updated successfully!', 'success');
+                    }
+                    
+                    // Refresh banner list
+                    loadBanners();
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to update banner status');
+                }
+            } catch (error) {
+                console.error('Toggle banner error:', error);
+                
+                // Show error notification
+                if (window.showNotification) {
+                    window.showNotification(error.message, 'error');
+                }
+            }
+        }
+        
+        // Delete banner
+        async function deleteBanner(id) {
+            // Confirm deletion
+            if (!confirm('Are you sure you want to delete this banner?')) {
+                return;
+            }
+            
+            try {
+                // Get auth token
+                const token = localStorage.getItem('access_token');
+                const tokenType = localStorage.getItem('token_type');
+                
+                if (!token || !tokenType) {
+                    throw new Error('You are not authenticated. Please log in again.');
+                }
+                
+                // Send delete request
+                const response = await fetch(`/api/admin/banners/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `${tokenType} ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    // Show success message
+                    if (window.showNotification) {
+                        window.showNotification('Banner deleted successfully!', 'success');
+                    }
+                    
+                    // Refresh banner list
+                    loadBanners();
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to delete banner');
+                }
+            } catch (error) {
+                console.error('Delete banner error:', error);
+                
+                // Show error notification
+                if (window.showNotification) {
+                    window.showNotification(error.message, 'error');
+                }
+            }
+        }
+        
+        // Initial load of banners
+        if (bannersList) {
+            loadBanners();
+        }
+        
+        // Handle deposit and withdrawal approvals
+        document.querySelectorAll('[data-deposit-id]').forEach(button => {
+            button.addEventListener('click', async function() {
+                const depositId = this.getAttribute('data-deposit-id');
+                const action = this.getAttribute('data-deposit-action');
+                
+                try {
+                    // Get auth token
+                    const token = localStorage.getItem('access_token');
+                    const tokenType = localStorage.getItem('token_type');
+                    
+                    if (!token || !tokenType) {
+                        throw new Error('You are not authenticated. Please log in again.');
+                    }
+                    
+                    // Submit status update
+                    const response = await fetch(`/api/admin/deposit/${depositId}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `${tokenType} ${token}`
+                        },
+                        body: JSON.stringify({ status: action })
+                    });
+                    
+                    if (response.ok) {
+                        // Show success notification
+                        if (window.showNotification) {
+                            window.showNotification(`Deposit ${action} successfully!`, 'success');
+                        }
+                        
+                        // Refresh the page after 1 second
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || `Failed to ${action} deposit`);
+                    }
+                } catch (error) {
+                    console.error('Deposit approval error:', error);
+                    
+                    // Show error notification
+                    if (window.showNotification) {
+                        window.showNotification(error.message, 'error');
+                    }
+                }
+            });
+        });
+        
+        document.querySelectorAll('[data-withdrawal-id]').forEach(button => {
+            button.addEventListener('click', async function() {
+                const withdrawalId = this.getAttribute('data-withdrawal-id');
+                const action = this.getAttribute('data-withdrawal-action');
+                
+                try {
+                    // Get auth token
+                    const token = localStorage.getItem('access_token');
+                    const tokenType = localStorage.getItem('token_type');
+                    
+                    if (!token || !tokenType) {
+                        throw new Error('You are not authenticated. Please log in again.');
+                    }
+                    
+                    // Submit status update
+                    const response = await fetch(`/api/admin/withdraw/${withdrawalId}/status`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `${tokenType} ${token}`
+                        },
+                        body: JSON.stringify({ status: action })
+                    });
+                    
+                    if (response.ok) {
+                        // Show success notification
+                        if (window.showNotification) {
+                            window.showNotification(`Withdrawal ${action} successfully!`, 'success');
+                        }
+                        
+                        // Refresh the page after 1 second
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || `Failed to ${action} withdrawal`);
+                    }
+                } catch (error) {
+                    console.error('Withdrawal approval error:', error);
+                    
+                    // Show error notification
+                    if (window.showNotification) {
+                        window.showNotification(error.message, 'error');
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

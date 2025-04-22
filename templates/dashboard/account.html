@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Account Settings - Secure Bank App{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h1>Account Settings</h1>
+    <p>Manage your account information and security settings.</p>
+</div>
+
+<div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    <div class="card mb-6">
+        <h2 class="mb-4">Profile Information</h2>
+        
+        <form id="profile-form">
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" id="username" name="username" class="form-input" value="{{ user.username }}" disabled>
+                <small class="text-gray-600">Username cannot be changed</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="email" class="form-label">Email Address</label>
+                <input type="email" id="email" name="email" class="form-input" value="{{ user.email }}" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="phone" class="form-label">Phone Number</label>
+                <input type="tel" id="phone" name="phone" class="form-input" value="{{ user.phone_number if user.phone_number else '' }}">
+            </div>
+            
+            <div class="mt-6">
+                <button type="submit" class="btn btn-primary">Update Profile</button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="card mb-6">
+        <h2 class="mb-4">Change Password</h2>
+        
+        <form id="password-form">
+            <div class="form-group">
+                <label for="current_password" class="form-label">Current Password</label>
+                <input type="password" id="current_password" name="current_password" class="form-input" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="new_password" class="form-label">New Password</label>
+                <input type="password" id="new_password" name="new_password" class="form-input" minlength="8" required>
+                <small class="text-gray-600">Minimum 8 characters, include numbers and special characters</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_password" class="form-label">Confirm New Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-input" minlength="8" required>
+            </div>
+            
+            <div class="mt-6">
+                <button type="submit" class="btn btn-primary">Change Password</button>
+            </div>
+        </form>
+    </div>
+    
+    <div class="card">
+        <h2 class="mb-4">Account Security</h2>
+        
+        <div class="mb-6">
+            <h3 class="mb-2 font-semibold">Two-Factor Authentication</h3>
+            {% if user.has_2fa %}
+                <p class="mb-2">Status: <span class="text-green-600 font-bold">Enabled</span></p>
+                <button id="disable-2fa" class="btn btn-danger">Disable 2FA</button>
+            {% else %}
+                <p class="mb-2">Status: <span class="text-red-600 font-bold">Disabled</span></p>
+                <button id="enable-2fa" class="btn btn-primary">Enable 2FA</button>
+            {% endif %}
+        </div>
+        
+        <div>
+            <h3 class="mb-2 font-semibold">Login Notifications</h3>
+            <div class="form-group">
+                <label class="flex items-center">
+                    <input type="checkbox" id="login_notifications" name="login_notifications" 
+                           class="mr-2" {% if user.login_notifications %}checked{% endif %}>
+                    <span>Email me when there's a new login to my account</span>
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2 class="mb-4 text-red-600">Danger Zone</h2>
+        
+        <div class="mb-6">
+            <h3 class="mb-2 font-semibold">Log Out All Devices</h3>
+            <p class="mb-2">This will end all active sessions except your current one.</p>
+            <button id="logout-all" class="btn btn-warning">Log Out All Devices</button>
+        </div>
+        
+        <div>
+            <h3 class="mb-2 font-semibold text-red-600">Delete Account</h3>
+            <p class="mb-2">This action is irreversible. All your data will be permanently deleted.</p>
+            <button id="delete-account" class="btn btn-danger">Delete My Account</button>
+        </div>
+    </div>
+</div>
+
+<div id="account-result" class="mt-6"></div>
+{% endblock %} 

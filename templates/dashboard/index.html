@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Secure Bank App{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 font-heading mb-2">Welcome, {{ user.username }}!</h1>
+    <p class="text-lg text-gray-600">Your current balance: <span class="font-bold text-bank-primary">${{ balance|round(2) }}</span></p>
+</div>
+
+<!-- Ads Banner Slideshow -->
+<div class="mb-8 relative overflow-hidden rounded-xl shadow-lg" style="height: 200px;">
+    <div id="banner-slideshow" class="h-full">
+        {% for banner in banners %}
+            <div class="slide absolute inset-0 transition-opacity duration-1000 {% if loop.first %}opacity-100{% else %}opacity-0{% endif %} {{ banner.background_color if 'bg-' in banner.background_color else 'bg-' ~ banner.background_color }} flex items-center justify-center">
+                <div class="{{ banner.text_color if 'text-' in banner.text_color else 'text-' ~ banner.text_color }} text-center p-6">
+                    <h3 class="text-2xl font-bold mb-2">{{ banner.title }}</h3>
+                    <p>{{ banner.subtitle }}</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="slide absolute inset-0 opacity-100 bg-gray-100 flex items-center justify-center">
+                <div class="text-gray-500 text-center p-6">
+                    <p>No active banners</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Account Overview Card -->
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <h2 class="text-xl font-bold text-bank-primary font-heading mb-4">Account Overview</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <div class="mb-4">
+                <h3 class="text-sm font-medium text-gray-500">Available Balance</h3>
+                <p class="text-2xl font-bold text-bank-primary">${{ balance|round(2) }}</p>
+            </div>
+            
+            <div class="mb-4">
+                <h3 class="text-sm font-medium text-gray-500">Account Number</h3>
+                <p class="text-lg">************{{ user.id[-4:] }}</p>
+            </div>
+            
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Account Type</h3>
+                <p class="text-lg">Personal Checking</p>
+            </div>
+        </div>
+        
+        <div>
+            <div class="mb-4">
+                <h3 class="text-sm font-medium text-gray-500">Quick Actions</h3>
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <a href="/transfer" class="px-4 py-2 bg-bank-primary text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                        Transfer
+                    </a>
+                    <a href="/deposit" class="px-4 py-2 bg-bank-success text-white rounded-lg hover:bg-green-600 transition-colors text-sm">
+                        Deposit
+                    </a>
+                    <a href="/withdraw" class="px-4 py-2 bg-bank-warning text-white rounded-lg hover:bg-yellow-600 transition-colors text-sm">
+                        Withdraw
+                    </a>
+                    <a href="/transactions" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors text-sm">
+                        Transactions
+                    </a>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-sm font-medium text-gray-500">Last Login</h3>
+                <p class="text-lg">Today</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions Preview -->
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-bank-primary font-heading">Recent Transactions</h2>
+        <a href="/transactions" class="text-sm text-bank-primary hover:underline">View All</a>
+    </div>
+    
+    <div class="overflow-hidden">
+        {% if recent_transactions and recent_transactions|length > 0 %}
+            {% for transaction in recent_transactions %}
+                <div class="py-3 {% if not loop.last %}border-b border-gray-100{% endif %} flex justify-between items-center">
+                    <div>
+                        <p class="font-medium">{{ transaction.description }}</p>
+                        <p class="text-xs text-gray-500">{{ transaction.relative_time }}</p>
+                    </div>
+                    <span class="{% if transaction.is_positive %}text-bank-success{% else %}text-bank-danger{% endif %} font-medium">
+                        {% if transaction.is_positive %}+{% endif %}${{ transaction.amount|abs|round(2) }}
+                    </span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="py-3 text-center text-gray-500">
+                <p>No recent transactions found</p>
+                <p class="text-xs mt-1">Deposits, withdrawals, and transfers will appear here</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Banner slideshow functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const slides = document.querySelectorAll('#banner-slideshow .slide');
+        let currentSlide = 0;
+        
+        function showSlide(index) {
+            // Hide all slides
+            slides.forEach(slide => {
+                slide.classList.remove('opacity-100');
+                slide.classList.add('opacity-0');
+            });
+            
+            // Show current slide
+            slides[index].classList.remove('opacity-0');
+            slides[index].classList.add('opacity-100');
+        }
+        
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % slides.length;
+            showSlide(currentSlide);
+        }
+        
+        // Start the slideshow
+        setInterval(nextSlide, 5000);
+    });
+</script>
+{% endblock %} 

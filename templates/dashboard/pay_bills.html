@@ -1,0 +1,540 @@
+{% extends "base.html" %}
+
+{% block title %}Pay Bills - Secure Bank App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Pay Bills</h1>
+    <p>Manage and pay your upcoming bills securely</p>
+</div>
+
+<div class="grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+    <div class="main-content">
+        <div class="card">
+            <div class="card-header">
+                <h2>Upcoming Bills</h2>
+                <button class="btn btn-primary" id="addBillBtn">Add New Bill</button>
+            </div>
+            
+            <div class="bills-list">
+                {% if bills %}
+                    {% for bill in bills %}
+                        <div class="bill-item {% if bill.status == 'overdue' %}overdue{% elif bill.status == 'due-soon' %}due-soon{% endif %}">
+                            <div class="bill-info">
+                                <div class="bill-icon">
+                                    <i class="icon-{{ bill.category|lower }}"></i>
+                                </div>
+                                <div class="bill-details">
+                                    <h3>{{ bill.payee }}</h3>
+                                    <p class="bill-description">{{ bill.description }}</p>
+                                    <div class="bill-meta">
+                                        <span class="bill-category">{{ bill.category }}</span>
+                                        <span class="bill-due-date">Due: {{ bill.due_date.strftime('%b %d, %Y') }}</span>
+                                        {% if bill.status == 'overdue' %}
+                                            <span class="status-badge overdue">Overdue</span>
+                                        {% elif bill.status == 'due-soon' %}
+                                            <span class="status-badge due-soon">Due Soon</span>
+                                        {% elif bill.status == 'paid' %}
+                                            <span class="status-badge paid">Paid</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bill-amount-section">
+                                <div class="bill-amount">${{ bill.amount|round(2) }}</div>
+                                <div class="bill-actions">
+                                    {% if bill.status != 'paid' %}
+                                        <button class="btn btn-primary pay-bill-btn" data-bill-id="{{ bill.id }}">Pay Now</button>
+                                        <button class="btn btn-secondary schedule-btn" data-bill-id="{{ bill.id }}">Schedule</button>
+                                    {% else %}
+                                        <button class="btn btn-secondary view-receipt-btn" data-bill-id="{{ bill.id }}">Receipt</button>
+                                    {% endif %}
+                                    <div class="dropdown">
+                                        <button class="btn btn-icon dropdown-toggle">
+                                            <i class="icon-more"></i>
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a href="#" class="dropdown-item edit-bill" data-bill-id="{{ bill.id }}">Edit</a>
+                                            <a href="#" class="dropdown-item delete-bill" data-bill-id="{{ bill.id }}">Delete</a>
+                                            <a href="#" class="dropdown-item view-history" data-bill-id="{{ bill.id }}">History</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-bills-message">
+                        <div class="empty-state-icon">
+                            <i class="icon-bill-empty"></i>
+                        </div>
+                        <h3>No Bills Found</h3>
+                        <p>You don't have any upcoming bills. Add a new bill to get started.</p>
+                        <button class="btn btn-primary" id="emptyStateAddBillBtn">Add Your First Bill</button>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if bills %}
+                <div class="pagination">
+                    {% if pagination.has_prev %}
+                        <a href="{{ url_for('dashboard.pay_bills', page=pagination.prev_num) }}" class="pagination-btn prev">&laquo; Previous</a>
+                    {% endif %}
+                    
+                    <span class="pagination-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+                    
+                    {% if pagination.has_next %}
+                        <a href="{{ url_for('dashboard.pay_bills', page=pagination.next_num) }}" class="pagination-btn next">Next &raquo;</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="card mt-6">
+            <div class="card-header">
+                <h2>Payment History</h2>
+                <a href="{{ url_for('dashboard.bill_history') }}" class="view-all">View All</a>
+            </div>
+            <div class="payment-history-list">
+                {% if payment_history %}
+                    {% for payment in payment_history %}
+                        <div class="payment-item">
+                            <div class="payment-icon">
+                                <i class="icon-{{ payment.category|lower }}"></i>
+                            </div>
+                            <div class="payment-details">
+                                <h3>{{ payment.payee }}</h3>
+                                <span class="payment-date">Paid on {{ payment.payment_date.strftime('%b %d, %Y') }}</span>
+                            </div>
+                            <div class="payment-amount">${{ payment.amount|round(2) }}</div>
+                            <button class="btn btn-secondary btn-small view-receipt-btn" data-payment-id="{{ payment.id }}">Receipt</button>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="no-payments-message">
+                        <p>No payment history to display.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="sidebar">
+        <div class="card payment-summary">
+            <h2>Bill Summary</h2>
+            <div class="summary-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Due This Month</span>
+                    <span class="stat-value">${{ summary.due_this_month|round(2) }}</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Already Paid</span>
+                    <span class="stat-value">${{ summary.already_paid|round(2) }}</span>
+                </div>
+                <div class="stat-item total">
+                    <span class="stat-label">Remaining</span>
+                    <span class="stat-value">${{ summary.remaining|round(2) }}</span>
+                </div>
+            </div>
+            <div class="due-soon-section">
+                <h3>Due Soon</h3>
+                {% if due_soon_bills %}
+                    <div class="due-soon-list">
+                        {% for bill in due_soon_bills %}
+                            <div class="due-soon-item">
+                                <div class="due-soon-details">
+                                    <h4>{{ bill.payee }}</h4>
+                                    <span class="due-date">Due in {{ bill.days_until_due }} days</span>
+                                </div>
+                                <div class="due-soon-amount">${{ bill.amount|round(2) }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button class="btn btn-primary pay-all-btn">Pay All Due Soon</button>
+                {% else %}
+                    <p class="no-due-soon">No bills due soon.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-6 recurring-bills">
+            <h2>Recurring Bills</h2>
+            {% if recurring_bills %}
+                <div class="recurring-list">
+                    {% for bill in recurring_bills %}
+                        <div class="recurring-item">
+                            <div class="recurring-details">
+                                <h3>{{ bill.payee }}</h3>
+                                <span class="recurring-frequency">{{ bill.frequency|capitalize }}</span>
+                            </div>
+                            <div class="recurring-amount">${{ bill.amount|round(2) }}</div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <a href="{{ url_for('dashboard.manage_recurring') }}" class="btn btn-secondary">Manage Recurring</a>
+            {% else %}
+                <div class="no-recurring">
+                    <p>No recurring bills set up.</p>
+                    <button class="btn btn-primary" id="setupRecurringBtn">Set Up Recurring Bills</button>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="card mt-6 bill-categories">
+            <h2>Spending by Category</h2>
+            <div class="chart-container">
+                <canvas id="billCategoryChart"></canvas>
+            </div>
+            <div class="category-legend">
+                {% for category in categories %}
+                    <div class="category-item">
+                        <span class="color-dot" style="background-color: {{ category.color }}"></span>
+                        <span class="category-name">{{ category.name }}</span>
+                        <span class="category-amount">${{ category.amount|round(2) }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bill Modal -->
+<div class="modal" id="addBillModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Add New Bill</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="addBillForm" method="post" action="{{ url_for('dashboard.add_bill') }}">
+                <div class="form-group">
+                    <label for="payee">Payee/Company Name</label>
+                    <input type="text" id="payee" name="payee" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <input type="text" id="description" name="description">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="amount">Amount ($)</label>
+                        <input type="number" id="amount" name="amount" step="0.01" min="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="due_date">Due Date</label>
+                        <input type="date" id="due_date" name="due_date" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" name="category" required>
+                        <option value="">Select a category</option>
+                        <option value="Utilities">Utilities</option>
+                        <option value="Rent">Rent/Mortgage</option>
+                        <option value="Insurance">Insurance</option>
+                        <option value="Subscription">Subscription</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Phone">Phone/Internet</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="recurring">Make this a recurring bill?</label>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="recurring" name="recurring">
+                        <label for="recurring" class="toggle-label"></label>
+                    </div>
+                </div>
+                <div class="recurring-options" style="display: none;">
+                    <div class="form-group">
+                        <label for="frequency">Frequency</label>
+                        <select id="frequency" name="frequency">
+                            <option value="monthly">Monthly</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="biweekly">Bi-weekly</option>
+                            <option value="quarterly">Quarterly</option>
+                            <option value="annually">Annually</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="end_date">End Date (Optional)</label>
+                        <input type="date" id="end_date" name="end_date">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reminder">Set Reminder</label>
+                    <select id="reminder" name="reminder">
+                        <option value="none">No Reminder</option>
+                        <option value="same_day">Same Day</option>
+                        <option value="1_day">1 Day Before</option>
+                        <option value="3_days">3 Days Before</option>
+                        <option value="1_week">1 Week Before</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Bill</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Pay Bill Modal -->
+<div class="modal" id="payBillModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Pay Bill</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="payment-details">
+                <h3>Payment Details</h3>
+                <div class="payment-summary">
+                    <div class="payment-row">
+                        <span class="label">Payee:</span>
+                        <span class="value" id="payment-payee"></span>
+                    </div>
+                    <div class="payment-row">
+                        <span class="label">Description:</span>
+                        <span class="value" id="payment-description"></span>
+                    </div>
+                    <div class="payment-row">
+                        <span class="label">Due Date:</span>
+                        <span class="value" id="payment-due-date"></span>
+                    </div>
+                    <div class="payment-row amount">
+                        <span class="label">Amount:</span>
+                        <span class="value" id="payment-amount"></span>
+                    </div>
+                </div>
+            </div>
+            <form id="payBillForm" method="post" action="{{ url_for('dashboard.pay_bill') }}">
+                <input type="hidden" id="bill_id" name="bill_id">
+                <div class="form-group">
+                    <label for="payment_source">Pay From</label>
+                    <select id="payment_source" name="payment_source" required>
+                        {% for account in payment_accounts %}
+                            <option value="{{ account.id }}">{{ account.name }} ({{ account.number[-4:] }}) - ${{ account.balance|round(2) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="payment_date">Payment Date</label>
+                    <input type="date" id="payment_date" name="payment_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="payment_amount">Payment Amount ($)</label>
+                    <input type="number" id="payment_amount" name="payment_amount" step="0.01" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="payment_memo">Memo (Optional)</label>
+                    <input type="text" id="payment_memo" name="payment_memo">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Bill Modal -->
+<div class="modal" id="scheduleBillModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Schedule Payment</h2>
+            <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="payment-details">
+                <h3>Bill Details</h3>
+                <div class="payment-summary">
+                    <div class="payment-row">
+                        <span class="label">Payee:</span>
+                        <span class="value" id="schedule-payee"></span>
+                    </div>
+                    <div class="payment-row">
+                        <span class="label">Description:</span>
+                        <span class="value" id="schedule-description"></span>
+                    </div>
+                    <div class="payment-row">
+                        <span class="label">Due Date:</span>
+                        <span class="value" id="schedule-due-date"></span>
+                    </div>
+                    <div class="payment-row amount">
+                        <span class="label">Amount:</span>
+                        <span class="value" id="schedule-amount"></span>
+                    </div>
+                </div>
+            </div>
+            <form id="scheduleBillForm" method="post" action="{{ url_for('dashboard.schedule_bill') }}">
+                <input type="hidden" id="schedule_bill_id" name="bill_id">
+                <div class="form-group">
+                    <label for="schedule_payment_source">Pay From</label>
+                    <select id="schedule_payment_source" name="payment_source" required>
+                        {% for account in payment_accounts %}
+                            <option value="{{ account.id }}">{{ account.name }} ({{ account.number[-4:] }}) - ${{ account.balance|round(2) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="schedule_payment_date">Payment Date</label>
+                    <input type="date" id="schedule_payment_date" name="payment_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="schedule_payment_amount">Payment Amount ($)</label>
+                    <input type="number" id="schedule_payment_amount" name="payment_amount" step="0.01" min="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label for="schedule_payment_memo">Memo (Optional)</label>
+                    <input type="text" id="schedule_payment_memo" name="payment_memo">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Schedule Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle recurring options when checkbox is clicked
+        const recurringCheckbox = document.getElementById('recurring');
+        const recurringOptions = document.querySelector('.recurring-options');
+        
+        if (recurringCheckbox && recurringOptions) {
+            recurringCheckbox.addEventListener('change', function() {
+                recurringOptions.style.display = this.checked ? 'block' : 'none';
+            });
+        }
+        
+        // Modal functionality
+        const addBillBtn = document.getElementById('addBillBtn');
+        const emptyStateAddBillBtn = document.getElementById('emptyStateAddBillBtn');
+        const addBillModal = document.getElementById('addBillModal');
+        const payBillModal = document.getElementById('payBillModal');
+        const scheduleBillModal = document.getElementById('scheduleBillModal');
+        const closeButtons = document.querySelectorAll('.close-modal');
+        const cancelButtons = document.querySelectorAll('.cancel-btn');
+        
+        // Open Add Bill modal
+        if (addBillBtn) {
+            addBillBtn.addEventListener('click', function() {
+                addBillModal.classList.add('show');
+            });
+        }
+        
+        if (emptyStateAddBillBtn) {
+            emptyStateAddBillBtn.addEventListener('click', function() {
+                addBillModal.classList.add('show');
+            });
+        }
+        
+        // Close modals when clicking close button
+        closeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                addBillModal.classList.remove('show');
+                payBillModal.classList.remove('show');
+                scheduleBillModal.classList.remove('show');
+            });
+        });
+        
+        // Close modals when clicking cancel button
+        cancelButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                addBillModal.classList.remove('show');
+                payBillModal.classList.remove('show');
+                scheduleBillModal.classList.remove('show');
+            });
+        });
+        
+        // Pay Bill buttons
+        const payBillButtons = document.querySelectorAll('.pay-bill-btn');
+        payBillButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const billId = this.getAttribute('data-bill-id');
+                // Here you would fetch bill details from the server or use data attributes
+                // For demonstration, we'll use placeholder data
+                document.getElementById('bill_id').value = billId;
+                document.getElementById('payment-payee').textContent = this.closest('.bill-item').querySelector('h3').textContent;
+                document.getElementById('payment-description').textContent = this.closest('.bill-item').querySelector('.bill-description').textContent;
+                document.getElementById('payment-due-date').textContent = this.closest('.bill-item').querySelector('.bill-due-date').textContent.replace('Due: ', '');
+                document.getElementById('payment-amount').textContent = this.closest('.bill-item').querySelector('.bill-amount').textContent;
+                
+                // Set today as default payment date
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('payment_date').value = today;
+                
+                // Set bill amount as default payment amount
+                const amountText = this.closest('.bill-item').querySelector('.bill-amount').textContent;
+                const amount = parseFloat(amountText.replace('$', ''));
+                document.getElementById('payment_amount').value = amount.toFixed(2);
+                
+                payBillModal.classList.add('show');
+            });
+        });
+        
+        // Schedule buttons
+        const scheduleButtons = document.querySelectorAll('.schedule-btn');
+        scheduleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const billId = this.getAttribute('data-bill-id');
+                // Here you would fetch bill details from the server or use data attributes
+                document.getElementById('schedule_bill_id').value = billId;
+                document.getElementById('schedule-payee').textContent = this.closest('.bill-item').querySelector('h3').textContent;
+                document.getElementById('schedule-description').textContent = this.closest('.bill-item').querySelector('.bill-description').textContent;
+                document.getElementById('schedule-due-date').textContent = this.closest('.bill-item').querySelector('.bill-due-date').textContent.replace('Due: ', '');
+                document.getElementById('schedule-amount').textContent = this.closest('.bill-item').querySelector('.bill-amount').textContent;
+                
+                // Set due date as default payment date
+                const dueDate = this.closest('.bill-item').querySelector('.bill-due-date').textContent.replace('Due: ', '');
+                const dateParts = dueDate.split(' ');
+                // Convert to ISO format for input value (this is simplified, a real implementation would need more parsing)
+                const month = new Date(Date.parse(dateParts[0] + " 1, 2000")).getMonth() + 1;
+                const day = dateParts[1].replace(',', '');
+                const year = dateParts[2];
+                document.getElementById('schedule_payment_date').value = `${year}-${month.toString().padStart(2, '0')}-${day.padStart(2, '0')}`;
+                
+                // Set bill amount as default payment amount
+                const amountText = this.closest('.bill-item').querySelector('.bill-amount').textContent;
+                const amount = parseFloat(amountText.replace('$', ''));
+                document.getElementById('schedule_payment_amount').value = amount.toFixed(2);
+                
+                scheduleBillModal.classList.add('show');
+            });
+        });
+        
+        // Bill categories chart
+        const billCategoryChart = document.getElementById('billCategoryChart');
+        if (billCategoryChart) {
+            const ctx = billCategoryChart.getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [{% for category in categories %}'{{ category.name }}',{% endfor %}],
+                    datasets: [{
+                        data: [{% for category in categories %}{{ category.amount }},{% endfor %}],
+                        backgroundColor: [{% for category in categories %}'{{ category.color }}',{% endfor %}]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

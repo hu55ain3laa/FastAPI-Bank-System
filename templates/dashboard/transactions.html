@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction History - Secure Bank App{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 font-heading mb-2">Transaction History</h1>
+    <p class="text-lg text-gray-600">View and search your recent account activity.</p>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+    <h2 class="text-xl font-bold text-bank-primary font-heading mb-4">Filter Transactions</h2>
+    
+    <form id="filter-form" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div>
+            <label for="transaction_type" class="block text-sm font-medium text-gray-700 mb-1">Transaction Type</label>
+            <select id="transaction_type" name="transaction_type" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-primary focus:border-bank-primary transition-colors">
+                <option value="all">All Transactions</option>
+                <option value="deposit">Deposits</option>
+                <option value="withdrawal">Withdrawals</option>
+                <option value="transfer_received">Transfers In</option>
+                <option value="transfer_sent">Transfers Out</option>
+            </select>
+        </div>
+        
+        <div>
+            <label for="date_from" class="block text-sm font-medium text-gray-700 mb-1">From Date</label>
+            <input type="date" id="date_from" name="date_from" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-primary focus:border-bank-primary transition-colors">
+        </div>
+        
+        <div>
+            <label for="date_to" class="block text-sm font-medium text-gray-700 mb-1">To Date</label>
+            <input type="date" id="date_to" name="date_to" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-primary focus:border-bank-primary transition-colors">
+        </div>
+        
+        <div class="flex items-end space-x-2 col-span-1 md:col-span-3">
+            <button type="submit" 
+                class="px-4 py-2 bg-bank-primary hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                Apply Filters
+            </button>
+            <button type="reset" 
+                class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium rounded-lg transition-colors">
+                Reset
+            </button>
+        </div>
+    </form>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200" id="transactions-list">
+                {% if transactions and transactions|length > 0 %}
+                    {% for transaction in transactions %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ transaction.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if transaction.type == 'deposit' %}bg-green-100 text-green-800
+                                    {% elif transaction.type == 'withdrawal' %}bg-red-100 text-red-800
+                                    {% elif transaction.type == 'transfer_received' %}bg-blue-100 text-blue-800
+                                    {% elif transaction.type == 'transfer_sent' %}bg-yellow-100 text-yellow-800
+                                    {% endif %}">
+                                    {% if transaction.type == 'deposit' %}Deposit
+                                    {% elif transaction.type == 'withdrawal' %}Withdrawal
+                                    {% elif transaction.type == 'transfer_received' %}Transfer In
+                                    {% elif transaction.type == 'transfer_sent' %}Transfer Out
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ transaction.description }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium {% if transaction.is_positive %}text-green-600{% else %}text-red-600{% endif %}">
+                                {% if transaction.is_positive %}+{% endif %}${{ transaction.amount|abs|round(2) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${{ transaction.resulting_balance|round(2) }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    {{ transaction.status|capitalize }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                            No transactions found.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="mt-6 flex items-center justify-between">
+        <div class="flex-1 flex justify-between sm:hidden">
+            {% if pagination.has_prev %}
+                <a href="/transactions?page={{ pagination.prev_num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Previous
+                </a>
+            {% endif %}
+            {% if pagination.has_next %}
+                <a href="/transactions?page={{ pagination.next_num }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Next
+                </a>
+            {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-gray-700">
+                    Showing <span class="font-medium">{{ start_item }}</span> to <span class="font-medium">{{ end_item }}</span> of <span class="font-medium">{{ total_items }}</span> results
+                </p>
+            </div>
+            <div>
+                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    {% if pagination.has_prev %}
+                        <a href="/transactions?page={{ pagination.prev_num }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Previous</span>
+                            <!-- Heroicon name: solid/chevron-left -->
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    {% endif %}
+                    
+                    <!-- Current page -->
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-bank-primary text-sm font-medium text-white">
+                        {{ pagination.page }}
+                    </span>
+                    
+                    {% if pagination.has_next %}
+                        <a href="/transactions?page={{ pagination.next_num }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            <span class="sr-only">Next</span>
+                            <!-- Heroicon name: solid/chevron-right -->
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                            </svg>
+                        </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <h2 class="text-xl font-bold text-bank-primary font-heading mb-4">Transaction Summary</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-blue-50 rounded-lg p-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Total Deposits</h3>
+            <p class="text-2xl font-bold text-green-600">${{ summary.deposits|round(2) }}</p>
+        </div>
+        
+        <div class="bg-blue-50 rounded-lg p-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Total Withdrawals</h3>
+            <p class="text-2xl font-bold text-red-600">${{ summary.withdrawals|abs|round(2) }}</p>
+        </div>
+        
+        <div class="bg-blue-50 rounded-lg p-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Transfers Sent</h3>
+            <p class="text-2xl font-bold text-yellow-600">${{ summary.transfers_out|abs|round(2) }}</p>
+        </div>
+        
+        <div class="bg-blue-50 rounded-lg p-4">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Transfers Received</h3>
+            <p class="text-2xl font-bold text-blue-600">${{ summary.transfers_in|round(2) }}</p>
+        </div>
+    </div>
+    
+    <div class="pt-4 border-t border-gray-200">
+        <h3 class="text-lg font-medium text-gray-800 mb-3">Export Transactions</h3>
+        <div class="flex items-center">
+            <select id="export_format" 
+                class="mr-2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bank-primary focus:border-bank-primary transition-colors">
+                <option value="csv">CSV</option>
+                <option value="pdf">PDF</option>
+            </select>
+            <button id="export-btn" type="button" 
+                class="px-4 py-2 bg-bank-primary hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                Export
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle filter form submission
+        const filterForm = document.getElementById('filter-form');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Get form values
+                const transactionType = document.getElementById('transaction_type').value;
+                const dateFrom = document.getElementById('date_from').value;
+                const dateTo = document.getElementById('date_to').value;
+                
+                // Build query string
+                let queryParams = [];
+                if (transactionType && transactionType !== 'all') {
+                    queryParams.push(`transaction_type=${transactionType}`);
+                }
+                if (dateFrom) {
+                    queryParams.push(`date_from=${dateFrom}`);
+                }
+                if (dateTo) {
+                    queryParams.push(`date_to=${dateTo}`);
+                }
+                
+                // Redirect with query params
+                const queryString = queryParams.length > 0 ? `?${queryParams.join('&')}` : '';
+                window.location.href = `/transactions${queryString}`;
+            });
+        }
+        
+        // Handle export button click
+        const exportBtn = document.getElementById('export-btn');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', async function() {
+                const format = document.getElementById('export_format').value;
+                
+                try {
+                    // Get auth token
+                    const token = localStorage.getItem('access_token');
+                    const tokenType = localStorage.getItem('token_type');
+                    
+                    if (!token || !tokenType) {
+                        throw new Error('You are not authenticated. Please log in again.');
+                    }
+                    
+                    // Get current URL search params to maintain filters
+                    const urlParams = new URLSearchParams(window.location.search);
+                    
+                    // Request export
+                    const response = await fetch(`/api/transactions/export?format=${format}&${urlParams.toString()}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `${tokenType} ${token}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        // For CSV, trigger download
+                        if (format === 'csv') {
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = url;
+                            a.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                        } else if (format === 'pdf') {
+                            // For PDF, open in new window
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            window.open(url, '_blank');
+                        }
+                        
+                        // Show success notification
+                        if (window.showNotification) {
+                            window.showNotification('Export successful!', 'success');
+                        }
+                    } else {
+                        // Handle error
+                        const errorData = await response.json();
+                        throw new Error(errorData.detail || 'Failed to export transactions');
+                    }
+                } catch (error) {
+                    console.error('Export error:', error);
+                    
+                    // Show error notification
+                    if (window.showNotification) {
+                        window.showNotification(error.message || 'Failed to export transactions', 'error');
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 
