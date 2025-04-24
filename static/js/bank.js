@@ -129,6 +129,13 @@ document.addEventListener('DOMContentLoaded', () => {
     depositForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
+      // Disable the submit button to prevent double submissions
+      const submitButton = depositForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      submitButton.classList.add('bg-gray-400');
+      submitButton.classList.remove('bg-bank-success', 'hover:bg-green-600');
+      submitButton.textContent = 'Processing...';
+      
       const formData = new FormData(depositForm);
       const amount = parseFloat(formData.get('amount'));
       
@@ -168,10 +175,22 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 3000);
         } else {
           showNotification(data.detail || 'Deposit request failed', 'error');
+          
+          // Re-enable the submit button on error
+          submitButton.disabled = false;
+          submitButton.classList.remove('bg-gray-400');
+          submitButton.classList.add('bg-bank-success', 'hover:bg-green-600');
+          submitButton.textContent = 'Request Deposit';
         }
       } catch (error) {
         console.error('Deposit error:', error);
         showNotification('An error occurred during deposit request', 'error');
+        
+        // Re-enable the submit button on error
+        submitButton.disabled = false;
+        submitButton.classList.remove('bg-gray-400');
+        submitButton.classList.add('bg-bank-success', 'hover:bg-green-600');
+        submitButton.textContent = 'Request Deposit';
       }
     });
   }
@@ -179,9 +198,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Admin: Approve/reject deposit
   const depositButtons = document.querySelectorAll('[data-deposit-action]');
   depositButtons.forEach(button => {
-    button.addEventListener('click', async () => {
-      const depositId = button.dataset.depositId;
-      const action = button.dataset.depositAction;
+    button.addEventListener('click', async function(e) {
+      // Prevent double clicks
+      if (this.disabled) return;
+      
+      // Disable the button to prevent double submissions
+      this.disabled = true;
+      const originalText = this.textContent.trim();
+      this.textContent = 'Processing...';
+      
+      const depositId = this.dataset.depositId;
+      const action = this.dataset.depositAction;
       
       try {
         const response = await fetch(`/api/admin/deposit/${depositId}/status`, {
@@ -201,10 +228,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 2000);
         } else {
           showNotification(data.detail || `Failed to ${action} deposit`, 'error');
+          // Re-enable the button on error
+          this.disabled = false;
+          this.textContent = originalText;
         }
       } catch (error) {
         console.error('Deposit action error:', error);
         showNotification(`An error occurred while ${action}ing deposit`, 'error');
+        // Re-enable the button on error
+        this.disabled = false;
+        this.textContent = originalText;
       }
     });
   });
@@ -212,9 +245,17 @@ document.addEventListener('DOMContentLoaded', () => {
   // Admin: Approve/reject withdrawal
   const withdrawalButtons = document.querySelectorAll('[data-withdrawal-action]');
   withdrawalButtons.forEach(button => {
-    button.addEventListener('click', async () => {
-      const withdrawalId = button.dataset.withdrawalId;
-      const action = button.dataset.withdrawalAction;
+    button.addEventListener('click', async function(e) {
+      // Prevent double clicks
+      if (this.disabled) return;
+      
+      // Disable the button to prevent double submissions
+      this.disabled = true;
+      const originalText = this.textContent.trim();
+      this.textContent = 'Processing...';
+      
+      const withdrawalId = this.dataset.withdrawalId;
+      const action = this.dataset.withdrawalAction;
       
       try {
         const response = await fetch(`/api/admin/withdraw/${withdrawalId}/status`, {
@@ -234,10 +275,16 @@ document.addEventListener('DOMContentLoaded', () => {
           }, 2000);
         } else {
           showNotification(data.detail || `Failed to ${action} withdrawal`, 'error');
+          // Re-enable the button on error
+          this.disabled = false;
+          this.textContent = originalText;
         }
       } catch (error) {
         console.error('Withdrawal action error:', error);
         showNotification(`An error occurred while ${action}ing withdrawal`, 'error');
+        // Re-enable the button on error
+        this.disabled = false;
+        this.textContent = originalText;
       }
     });
   });

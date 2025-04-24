@@ -183,6 +183,13 @@
             withdrawForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 
+                // Disable the submit button to prevent double submissions
+                const submitButton = withdrawForm.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.classList.add('bg-gray-400');
+                submitButton.classList.remove('bg-bank-warning', 'hover:bg-orange-600');
+                submitButton.textContent = 'Processing...';
+                
                 // Get form data
                 const formData = new FormData(withdrawForm);
                 const amount = formData.get('amount');
@@ -280,6 +287,12 @@
                         if (window.showNotification) {
                             window.showNotification(data.detail || 'Failed to create withdrawal request', 'error');
                         }
+                        
+                        // Re-enable the submit button on error
+                        submitButton.disabled = false;
+                        submitButton.classList.remove('bg-gray-400');
+                        submitButton.classList.add('bg-bank-warning', 'hover:bg-orange-600');
+                        submitButton.textContent = 'Request Withdrawal';
                     }
                 } catch (error) {
                     console.error('Withdrawal error:', error);
@@ -296,6 +309,12 @@
                     if (window.showNotification) {
                         window.showNotification(error.message || 'An error occurred during withdrawal request', 'error');
                     }
+                    
+                    // Re-enable the submit button on error
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('bg-gray-400');
+                    submitButton.classList.add('bg-bank-warning', 'hover:bg-orange-600');
+                    submitButton.textContent = 'Request Withdrawal';
                 }
             });
         }
